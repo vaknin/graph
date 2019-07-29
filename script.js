@@ -8,7 +8,8 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 const Expression = algebra.Expression;
 const Equation = algebra.Equation;
-let xAxis, yAxis;
+let yAxisX, xAxisY;
+let zoom = 1;
 
 // Wait for grid image to load, and start animation loop
 const grid = new Image();
@@ -24,14 +25,15 @@ grid.onload = () => {
 // Draw the axes
 function drawAxes(){
 
-    yAxis = Math.round(canvas.height / 2);
-    xAxis = Math.round(canvas.width / 2);
+    xAxisY = Math.round(canvas.height / 2);
+    yAxisX = Math.round(canvas.width / 2);
     
-    while(yAxis % 15 != 0){
-        yAxis--;
+    // Make the axes sit exactly on grid's vertical&horizontal lines
+    while(xAxisY % 15 != 0){
+        xAxisY--;
     }
-    while(xAxis % 15 != 0){
-        xAxis--;
+    while(yAxisX % 15 != 0){
+        yAxisX--;
     }
 
     // Axes line properties
@@ -39,15 +41,15 @@ function drawAxes(){
 
     // Y-axis
     ctx.beginPath();
-    ctx.moveTo(xAxis, 0);
-    ctx.lineTo(xAxis, canvas.height);
+    ctx.moveTo(yAxisX, 0);
+    ctx.lineTo(yAxisX, canvas.height);
     ctx.stroke();
     ctx.closePath();
 
     // X-axis
     ctx.beginPath();
-    ctx.moveTo(0, yAxis);
-    ctx.lineTo(canvas.width, yAxis);
+    ctx.moveTo(0, xAxisY);
+    ctx.lineTo(canvas.width, xAxisY);
     ctx.stroke();
     ctx.closePath();
 
@@ -60,7 +62,7 @@ async function draw(){
     ctx.clearRect(0,0, canvas.width, canvas.height); // Clear canvas
     ctx.drawImage(grid, 0, 0); // Draw grid
     drawAxes(); // Draw axes
-    graph('-x + 4');
+    graph('5 + x');
     requestAnimationFrame(draw); // Loop
 }
 
@@ -74,15 +76,19 @@ function graph(f){
     ctx.strokeStyle = '#55f';
     ctx.beginPath();
 
-    // left-most point
     x = -1000;
     y = algebra.parse(f).eval({x: x});
-    ctx.moveTo(xAxis + (x * gridSize), yAxis - (y * gridSize));
+    // left-most point
+    x = (yAxisX + (x * gridSize * zoom));
+    y = (xAxisY - (y * gridSize * zoom));
+    ctx.moveTo(x, y);
 
-    // right-most point
     x = 1000;
     y = algebra.parse(f).eval({x: x});
-    ctx.lineTo(xAxis + (x * gridSize), yAxis - (y * gridSize));
+    x = (yAxisX + (x * gridSize * zoom));
+    y = (xAxisY - (y * gridSize * zoom));
+    // right-most point
+    ctx.lineTo(x, y);
     ctx.stroke();
     ctx.closePath();
 
@@ -103,9 +109,20 @@ function graph(f){
 // Draw a specific point on the graph
 function point(x,y){
     ctx.beginPath();
-    ctx.arc(xAxis + (x * gridSize), yAxis - (y * gridSize), 5,0, Math.PI*2, true);
+    y = (xAxisY - (y * gridSize * zoom));
+    x = (yAxisX + (x * gridSize * zoom));
+    ctx.arc(x, y, 5,0, Math.PI*2, true);
     ctx.fill();
     ctx.closePath();
 }
+
+//#endregion
+
+//#region Event Listeners
+
+document.addEventListener('wheel', e => {
+    Math.sign(e.deltaY) == -1 ? zoom += 0.3 : zoom-= 0.3;
+    if (zoom <= 0.3) zoom = 0.3;
+});
 
 //#endregion
