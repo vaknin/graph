@@ -60,31 +60,44 @@ async function draw(){
     ctx.clearRect(0,0, canvas.width, canvas.height); // Clear canvas
     ctx.drawImage(grid, 0, 0); // Draw grid
     drawAxes(); // Draw axes
-    graph('-5+5x');
+    graph('-x + 4');
     requestAnimationFrame(draw); // Loop
 }
 
 // Graph a function
 function graph(f){
 
-    let x;
-    ctx.beginPath();
-    ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 3;
+    let x, y;
 
+    // Canvas
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#55f';
+    ctx.beginPath();
+
+    // left-most point
     x = -1000;
-    let equation = f.replace('x', `*(${x})`);
-    let y = parseInt(algebra.parse(equation));
+    y = algebra.parse(f).eval({x: x});
     ctx.moveTo(xAxis + (x * gridSize), yAxis - (y * gridSize));
 
+    // right-most point
     x = 1000;
-    equation = f.replace('x', `*(${x})`);
-    y = parseInt(algebra.parse(equation));
+    y = algebra.parse(f).eval({x: x});
     ctx.lineTo(xAxis + (x * gridSize), yAxis - (y * gridSize));
     ctx.stroke();
     ctx.closePath();
 
+    // Y-intersect
+    y = algebra.parse(f).eval({x: 0});
+    point(0, y);
+
+    // X-intersect
+    let equation = new Equation(algebra.parse(f), 0);
+    x = equation.solveFor("x");
+    point(x, 0);
+
+    // Revert canvas
     ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
 }
 
 // Draw a specific point on the graph
