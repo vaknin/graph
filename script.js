@@ -1,10 +1,13 @@
-// Canvas initialization
+//#region Initialize
+
+// Canvas
 const gridSize = 15;
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
+const Expression = algebra.Expression;
+const Equation = algebra.Equation;
 let xAxis, yAxis;
 
 // Wait for grid image to load, and start animation loop
@@ -13,6 +16,10 @@ grid.src = './grid.svg';
 grid.onload = () => {
     draw();
 };
+
+//#endregion
+
+//#region Functions
 
 // Draw the axes
 function drawAxes(){
@@ -53,28 +60,31 @@ async function draw(){
     ctx.clearRect(0,0, canvas.width, canvas.height); // Clear canvas
     ctx.drawImage(grid, 0, 0); // Draw grid
     drawAxes(); // Draw axes
-    //graph('-9x');
-    point(5,5);
-
+    graph('-5+5x');
     requestAnimationFrame(draw); // Loop
 }
 
 // Graph a function
 function graph(f){
 
-    // Extreact slope and y-intercept
-    let slope = parseInt(f.substring(0, f.indexOf('x')));
-    let intercept = parseInt(f.substring(f.indexOf('x') + 1));
-    if (!intercept) intercept = 0;
-    
-    console.log(slope);
-    
-
-    // Draw on canvas
+    let x;
     ctx.beginPath();
-    ctx.arc(xAxis, yAxis - (intercept * gridSize), 5,0, Math.PI*2, true);
-    ctx.fill();
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 3;
+
+    x = -1000;
+    let equation = f.replace('x', `*(${x})`);
+    let y = parseInt(algebra.parse(equation));
+    ctx.moveTo(xAxis + (x * gridSize), yAxis - (y * gridSize));
+
+    x = 1000;
+    equation = f.replace('x', `*(${x})`);
+    y = parseInt(algebra.parse(equation));
+    ctx.lineTo(xAxis + (x * gridSize), yAxis - (y * gridSize));
+    ctx.stroke();
     ctx.closePath();
+
+    ctx.strokeStyle = 'black';
 }
 
 // Draw a specific point on the graph
@@ -84,3 +94,5 @@ function point(x,y){
     ctx.fill();
     ctx.closePath();
 }
+
+//#endregion
