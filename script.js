@@ -1,4 +1,18 @@
-//#region Initialize
+//#region Global Variables
+
+// Algebra
+const Expression = algebra.Expression;
+const Equation = algebra.Equation;
+
+let yAxisX, xAxisY;
+let mouseX, mouseY;
+let zoom = 1;
+let input;
+
+
+//#endregion
+
+//#region Initialize Canvas
 
 // Canvas
 const gridSize = 15;
@@ -6,10 +20,6 @@ const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-const Expression = algebra.Expression;
-const Equation = algebra.Equation;
-let yAxisX, xAxisY;
-let zoom = 1;
 
 // Wait for grid image to load, and start animation loop
 const grid = new Image();
@@ -62,48 +72,58 @@ async function draw(){
     ctx.clearRect(0,0, canvas.width, canvas.height); // Clear canvas
     ctx.drawImage(grid, 0, 0); // Draw grid
     drawAxes(); // Draw axes
-    graph('5 + x');
+
+    // If user typed an equation, graph it
+    if (input){
+        try{
+            algebra.parse(input);
+            graph(input);
+        }
+        catch(e){}
+    }
+    
     requestAnimationFrame(draw); // Loop
 }
 
 // Graph a function
 function graph(f){
-
+    
     let x, y;
 
     // Canvas
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.strokeStyle = '#55f';
     ctx.beginPath();
 
+    // left-most point
     x = -1000;
     y = algebra.parse(f).eval({x: x});
-    // left-most point
     x = (yAxisX + (x * gridSize * zoom));
     y = (xAxisY - (y * gridSize * zoom));
     ctx.moveTo(x, y);
 
+    // right-most point
     x = 1000;
     y = algebra.parse(f).eval({x: x});
     x = (yAxisX + (x * gridSize * zoom));
     y = (xAxisY - (y * gridSize * zoom));
-    // right-most point
     ctx.lineTo(x, y);
     ctx.stroke();
     ctx.closePath();
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
 
-    // Y-intersect
+    // Y-intersect (X = 0)
     y = algebra.parse(f).eval({x: 0});
+    console.log(y);
     point(0, y);
 
-    // X-intersect
-    let equation = new Equation(algebra.parse(f), 0);
-    x = equation.solveFor("x");
-    point(x, 0);
-
-    // Revert canvas
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 1;
+    // X-intersect (Y = 0)
+    if (f.includes('x')){
+        let equation = new Equation(algebra.parse(f), 0);
+        x = equation.solveFor("x");
+        point(x, 0);
+    }
 }
 
 // Draw a specific point on the graph
@@ -120,9 +140,16 @@ function point(x,y){
 
 //#region Event Listeners
 
+// Mouse wheel
 document.addEventListener('wheel', e => {
-    Math.sign(e.deltaY) == -1 ? zoom += 0.3 : zoom-= 0.3;
-    if (zoom <= 0.3) zoom = 0.3;
+    Math.sign(e.deltaY) == -1 ? zoom += 0.25 : zoom-= 0.25;
+    if (zoom < 0.1) zoom = 0.1;
+});
+
+// Input change
+const inputElement = document.getElementById('input');
+inputElement.addEventListener('input', () => {
+    input = inputElement.value;
 });
 
 //#endregion
